@@ -1,0 +1,6 @@
+{
+  "name": "Metin2 Web UI System",
+  "description": "A web-based simulation of the iconic Metin2 character status and inventory system, featuring real-time stat updates and a classic grid-based inventory.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
