@@ -61,7 +61,7 @@ void ConvertEmpireText(DWORD dwEmpireID, char* szText, size_t len, int iPct)
 		{
 			if (*pbText & 0x80)
 			{
-				static char s_cChinaTable[][3] = { "��","��","��","��","��" };
+				static const char* s_cChinaTable[] = { "ㅁㅁ", "ㅁㅁ", "ㅁㅁ", "ㅁㅁ", "ㅁㅁ" };
 				int n = number(0, 4);
 				pbText[0] = s_cChinaTable[n][0];
 				pbText[1] = s_cChinaTable[n][1];

@@ -31,7 +31,7 @@ endif
 LIBS = -lm -lmd
 
 # Project Flags
-CFLAGS  = -m32 -g -O2 -pipe -fexceptions -fno-strict-aliasing -pthread -D_THREAD_SAFE -DNDEBUG -Wno-volatile -Wno-register
+CFLAGS  = -m32 -g -O2 -pipe -fexceptions -fno-strict-aliasing -pthread -D_THREAD_SAFE -DNDEBUG -Wno-register
 CXXFLAGS = -std=c++2a -Wl,-rpath=/usr/local/lib/gcc9
 
 ifeq ($(ENABLE_STATIC), 1)
