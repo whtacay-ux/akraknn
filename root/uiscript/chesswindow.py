@@ -7,8 +7,8 @@ window = {
 	"x" : 0,
 	"y" : 0,
 
-	"width" : 400,
-	"height" : 450,
+	"width" : 320,
+	"height" : 420,
 
 	"children" :
 	(
@@ -20,8 +20,8 @@ window = {
 			"x" : 0,
 			"y" : 0,
 
-			"width" : 400,
-			"height" : 450,
+			"width" : 320,
+			"height" : 420,
 
 			"children" :
 			(
@@ -34,12 +34,12 @@ window = {
 					"x" : 8,
 					"y" : 7,
 
-					"width" : 384,
+					"width" : 304,
 					"color" : "yellow",
 
 					"children" :
 					(
-						{ "name":"TitleName", "type":"text", "x":192, "y":3, "text":"Chess Game", "text_horizontal_align":"center" },
+						{ "name":"TitleName", "type":"text", "x":152, "y":3, "text":"Satranç Sistemi", "text_horizontal_align":"center" },
 					),
 				},
 
@@ -48,7 +48,7 @@ window = {
 					"name" : "board_grid",
 					"type" : "window",
 
-					"x" : 72,
+					"x" : 32,
 					"y" : 40,
 
 					"width" : 256,
@@ -61,10 +61,10 @@ window = {
 					"type" : "window",
 
 					"x" : 10,
-					"y" : 310,
+					"y" : 305,
 
-					"width" : 380,
-					"height" : 130,
+					"width" : 304,
+					"height" : 110,
 
 					"children" :
 					(
@@ -72,10 +72,10 @@ window = {
 							"name" : "name_slot",
 							"type" : "slotbar",
 
-							"x" : 10,
-							"y" : 10,
+							"x" : 0,
+							"y" : 5,
 
-							"width" : 120,
+							"width" : 100,
 							"height" : 18,
 
 							"children" :
@@ -87,7 +87,7 @@ window = {
 									"x" : 3,
 									"y" : 3,
 
-									"width" : 114,
+									"width" : 94,
 									"height" : 15,
 
 									"input_limit" : 12,
@@ -98,10 +98,10 @@ window = {
 							"name" : "invite_button",
 							"type" : "button",
 
-							"x" : 140,
-							"y" : 10,
+							"x" : 105,
+							"y" : 4,
 
-							"text" : "Invite",
+							"text" : "Davet Et",
 
 							"default_image" : "d:/ymir work/ui/public/middle_button_01.sub",
 							"over_image" : "d:/ymir work/ui/public/middle_button_02.sub",
@@ -111,23 +111,10 @@ window = {
 							"name" : "bot_button",
 							"type" : "button",
 
-							"x" : 230,
-							"y" : 10,
+							"x" : 195,
+							"y" : 4,
 
-							"text" : "Play with Bot",
-
-							"default_image" : "d:/ymir work/ui/public/middle_button_01.sub",
-							"over_image" : "d:/ymir work/ui/public/middle_button_02.sub",
-							"down_image" : "d:/ymir work/ui/public/middle_button_03.sub",
-						},
-						{
-							"name" : "quit_button",
-							"type" : "button",
-
-							"x" : 320,
-							"y" : 10,
-
-							"text" : "Quit",
+							"text" : "Botla Oyna",
 
 							"default_image" : "d:/ymir work/ui/public/middle_button_01.sub",
 							"over_image" : "d:/ymir work/ui/public/middle_button_02.sub",
@@ -137,11 +124,24 @@ window = {
 							"name" : "status_text",
 							"type" : "text",
 
-							"x" : 190,
-							"y" : 50,
+							"x" : 152,
+							"y" : 35,
 
-							"text" : "Ready",
+							"text" : "Oyun Hazır",
 							"text_horizontal_align" : "center",
+						},
+						{
+							"name" : "quit_button",
+							"type" : "button",
+
+							"x" : 77,
+							"y" : 60,
+
+							"text" : "Oyundan Ayrıl / Pes Et",
+
+							"default_image" : "d:/ymir work/ui/public/large_button_01.sub",
+							"over_image" : "d:/ymir work/ui/public/large_button_02.sub",
+							"down_image" : "d:/ymir work/ui/public/large_button_03.sub",
 						},
 					),
 				},

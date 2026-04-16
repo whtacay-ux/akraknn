@@ -36,7 +36,7 @@ class ChessWindow(ui.ScriptWindow):
 	def __init__(self):
 		ui.ScriptWindow.__init__(self)
 		self.__LoadWindow()
-		self.ResetGame()
+		self.ShowStartingPosition()
 
 	def __del__(self):
 		ui.ScriptWindow.__del__(self)
@@ -122,7 +122,23 @@ class ChessWindow(ui.ScriptWindow):
 		self.selected_pos = None
 		self.selection_highlight.Hide()
 		self.is_my_turn = False
-		self.status_text.SetText("Ready")
+		self.status_text.SetText("Beklemede")
+
+	def ShowStartingPosition(self):
+		self.ResetGame()
+		# White pieces (Bottom)
+		for x in range(8): self.OnUpdateBoard(x, 6, CHESS_PIECE_W_PAWN)
+		self.OnUpdateBoard(0, 7, CHESS_PIECE_W_ROOK); self.OnUpdateBoard(7, 7, CHESS_PIECE_W_ROOK)
+		self.OnUpdateBoard(1, 7, CHESS_PIECE_W_KNIGHT); self.OnUpdateBoard(6, 7, CHESS_PIECE_W_KNIGHT)
+		self.OnUpdateBoard(2, 7, CHESS_PIECE_W_BISHOP); self.OnUpdateBoard(5, 7, CHESS_PIECE_W_BISHOP)
+		self.OnUpdateBoard(3, 7, CHESS_PIECE_W_QUEEN); self.OnUpdateBoard(4, 7, CHESS_PIECE_W_KING)
+
+		# Black pieces (Top)
+		for x in range(8): self.OnUpdateBoard(x, 1, CHESS_PIECE_B_PAWN)
+		self.OnUpdateBoard(0, 0, CHESS_PIECE_B_ROOK); self.OnUpdateBoard(7, 0, CHESS_PIECE_B_ROOK)
+		self.OnUpdateBoard(1, 0, CHESS_PIECE_B_KNIGHT); self.OnUpdateBoard(6, 0, CHESS_PIECE_B_KNIGHT)
+		self.OnUpdateBoard(2, 0, CHESS_PIECE_B_BISHOP); self.OnUpdateBoard(5, 0, CHESS_PIECE_B_BISHOP)
+		self.OnUpdateBoard(3, 0, CHESS_PIECE_B_QUEEN); self.OnUpdateBoard(4, 0, CHESS_PIECE_B_KING)
 
 	def Open(self):
 		self.Show()
@@ -172,11 +188,11 @@ class ChessWindow(ui.ScriptWindow):
 
 	def OnInvite(self, name):
 		self.opponent_name = name
-		self.status_text.SetText("Invitation from %s" % name)
+		self.status_text.SetText("%s Davet Gönderdi" % name)
 		# Show accept/decline dialog
 		import uiCommon
 		self.questionDialog = uiCommon.QuestionDialog()
-		self.questionDialog.SetText("%s invites you to Chess. Accept?" % name)
+		self.questionDialog.SetText("%s seninle satranç oynamak istiyor. Kabul ediyor musun?" % name)
 		self.questionDialog.SetAcceptEvent(ui.__mem_func__(self.__AcceptInvite))
 		self.questionDialog.SetCancelEvent(ui.__mem_func__(self.__DeclineInvite))
 		self.questionDialog.Open()
@@ -195,7 +211,7 @@ class ChessWindow(ui.ScriptWindow):
 		self.is_white = is_white
 		self.is_my_turn = is_white
 		self.opponent_name = opponent_name
-		self.status_text.SetText("Game started against %s" % opponent_name)
+		self.status_text.SetText("Rakip: %s" % opponent_name)
 		self.Open()
 
 	def OnUpdateBoard(self, x, y, piece):
@@ -219,7 +235,7 @@ class ChessWindow(ui.ScriptWindow):
 		self.OnUpdateBoard(to_x, to_y, piece)
 		
 		self.is_my_turn = not self.is_my_turn
-		self.status_text.SetText("Your turn" if self.is_my_turn else "Opponent's turn")
+		self.status_text.SetText("Sıra Sende" if self.is_my_turn else "Rakip Oynuyor")
 
 	def __GetPieceIcon(self, piece):
 		path = self.path + "pieces/"
