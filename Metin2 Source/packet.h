@@ -2454,7 +2454,6 @@ typedef struct SPacketAcce
 } TPacketAcce;
 #endif
 
-#define ENABLE_CHESS_SYSTEM
 #ifdef ENABLE_CHESS_SYSTEM
 enum
 {

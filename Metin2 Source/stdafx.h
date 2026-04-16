@@ -68,4 +68,6 @@
 #define IN
 #define OUT
 
+#define ENABLE_CHESS_SYSTEM
+
 #endif
