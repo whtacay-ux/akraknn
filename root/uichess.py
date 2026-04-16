@@ -67,30 +67,56 @@ class ChessWindow(ui.ScriptWindow):
 		self.quit_button.SetEvent(ui.__mem_func__(self.__OnQuit))
 
 		self.pieces = {}
+		self.board_state = {}
 		self.selected_pos = None
 		self.is_white = True
 		self.is_my_turn = False
 		self.opponent_name = ""
 
+		self.path = "d:/ymir work/ui/chess/"
+
+		# Create board background
+		self.board_bg = ui.ImageBox()
+		self.board_bg.SetParent(self.board_grid)
+		self.board_bg.LoadImage(self.path + "board.png")
+		self.board_bg.Show()
+
+		# Selection highlight
+		self.selection_highlight = ui.ImageBox()
+		self.selection_highlight.SetParent(self.board_grid)
+		self.selection_highlight.LoadImage(self.path + "selection.png")
+		self.selection_highlight.Hide()
+
 		# Create piece images
 		for y in range(8):
 			for x in range(8):
-				slot = ui.SlotWindow()
+				slot = ui.Window()
 				slot.SetParent(self.board_grid)
 				slot.SetSize(32, 32)
 				slot.SetPosition(x * 32, y * 32)
-				slot.SetSelectEmptySlotEvent(ui.__mem_func__(self.__OnSelectEmptySlot))
-				slot.SetSelectItemSlotEvent(ui.__mem_func__(self.__OnSelectItemSlot))
-				slot.SetOverInItemEvent(ui.__mem_func__(self.__OnOverInItem))
-				slot.SetOverOutItemEvent(ui.__mem_func__(self.__OnOverOutItem))
-				slot.AppendSlot(0, 0, 0, 32, 32)
-				slot.Show()
-				self.pieces[(x, y)] = slot
+				
+				# We use a button-like behavior for clicking
+				btn = ui.Button()
+				btn.SetParent(slot)
+				btn.SetSize(32, 32)
+				btn.SetPosition(0, 0)
+				btn.SetEvent(ui.__mem_func__(self.__OnSelectSlot), (x, y))
+				btn.Show()
+				
+				img = ui.ImageBox()
+				img.SetParent(slot)
+				img.SetPosition(0, 0)
+				img.Hide()
+				
+				self.pieces[(x, y)] = {"window": slot, "image": img, "button": btn}
+				self.board_state[(x, y)] = CHESS_PIECE_EMPTY
 
 	def ResetGame(self):
-		for slot in self.pieces.values():
-			slot.ClearSlot(0)
+		for pos in self.pieces:
+			self.pieces[pos]["image"].Hide()
+			self.board_state[pos] = CHESS_PIECE_EMPTY
 		self.selected_pos = None
+		self.selection_highlight.Hide()
 		self.is_my_turn = False
 		self.status_text.SetText("Ready")
 
@@ -104,50 +130,41 @@ class ChessWindow(ui.ScriptWindow):
 		name = self.name_edit.GetText()
 		if not name:
 			return
-		net.SendChatPacket("/chess_invite " + name)
+		net.SendChessPacket(CHESS_SUBHEADER_CG_INVITE, name)
 
 	def __OnStartBot(self):
-		net.SendChatPacket("/chess_start_bot")
+		net.SendChessPacket(CHESS_SUBHEADER_CG_START_BOT)
 
 	def __OnQuit(self):
-		net.SendChatPacket("/chess_quit")
+		net.SendChessPacket(CHESS_SUBHEADER_CG_QUIT)
 		self.ResetGame()
 		self.Close()
 
-	def __OnSelectEmptySlot(self, slotIndex):
+	def __OnSelectSlot(self, pos):
 		if not self.is_my_turn:
 			return
+		
+		x, y = pos
+		piece = self.board_state[pos]
+		
 		if self.selected_pos:
-			# Move to empty slot
-			x, y = self.__GetSlotPos(slotIndex)
 			from_x, from_y = self.selected_pos
-			net.SendChatPacket("/chess_move %d %d %d %d" % (from_x, from_y, x, y))
+			if from_x == x and from_y == y:
+				self.selected_pos = None
+				self.selection_highlight.Hide()
+				return
+			
+			net.SendChessPacket(CHESS_SUBHEADER_CG_MOVE, "", (from_x << 8) | from_y, (x << 8) | y)
 			self.selected_pos = None
-
-	def __OnSelectItemSlot(self, slotIndex):
-		if not self.is_my_turn:
-			return
-		x, y = self.__GetSlotPos(slotIndex)
-		if self.selected_pos:
-			# Capture or change selection
-			from_x, from_y = self.selected_pos
-			net.SendChatPacket("/chess_move %d %d %d %d" % (from_x, from_y, x, y))
-			self.selected_pos = None
+			self.selection_highlight.Hide()
 		else:
-			self.selected_pos = (x, y)
-
-	def __GetSlotPos(self, slotIndex):
-		# This is a bit hacky since we have multiple slot windows
-		for pos, slot in self.pieces.items():
-			if slot.IsOver():
-				return pos
-		return (0, 0)
-
-	def __OnOverInItem(self, slotIndex):
-		pass
-
-	def __OnOverOutItem(self):
-		pass
+			if piece != CHESS_PIECE_EMPTY:
+				# Check if it's our piece
+				is_piece_white = (piece >= CHESS_PIECE_W_PAWN and piece <= CHESS_PIECE_W_KING)
+				if is_piece_white == self.is_white:
+					self.selected_pos = (x, y)
+					self.selection_highlight.SetPosition(x * 32, y * 32)
+					self.selection_highlight.Show()
 
 	def OnInvite(self, name):
 		self.opponent_name = name
@@ -161,12 +178,12 @@ class ChessWindow(ui.ScriptWindow):
 		self.questionDialog.Open()
 
 	def __AcceptInvite(self):
-		net.SendChatPacket("/chess_accept " + self.opponent_name)
+		net.SendChessPacket(CHESS_SUBHEADER_CG_ACCEPT, self.opponent_name)
 		self.questionDialog.Close()
 		self.questionDialog = None
 
 	def __DeclineInvite(self):
-		net.SendChatPacket("/chess_decline " + self.opponent_name)
+		net.SendChessPacket(CHESS_SUBHEADER_CG_DECLINE, self.opponent_name)
 		self.questionDialog.Close()
 		self.questionDialog = None
 
@@ -178,39 +195,39 @@ class ChessWindow(ui.ScriptWindow):
 		self.Open()
 
 	def OnUpdateBoard(self, x, y, piece):
-		# Map piece ID to icon
-		icon = self.__GetPieceIcon(piece)
-		self.pieces[(x, y)].SetItemSlot(0, icon, 1)
+		self.board_state[(x, y)] = piece
+		if piece == CHESS_PIECE_EMPTY:
+			self.pieces[(x, y)]["image"].Hide()
+		else:
+			icon = self.__GetPieceIcon(piece)
+			self.pieces[(x, y)]["image"].LoadImage(icon)
+			self.pieces[(x, y)]["image"].Show()
 
 	def OnUpdate(self):
 		pass
 
 	def OnMove(self, from_x, from_y, to_x, to_y):
-		# Update board locally
-		piece = self.__GetPieceAt(from_x, from_y)
-		self.pieces[(from_x, from_y)].ClearSlot(0)
-		self.pieces[(to_x, to_y)].SetItemSlot(0, self.__GetPieceIcon(piece), 1)
+		piece = self.board_state[(from_x, from_y)]
+		self.OnUpdateBoard(from_x, from_y, CHESS_PIECE_EMPTY)
+		self.OnUpdateBoard(to_x, to_y, piece)
+		
 		self.is_my_turn = not self.is_my_turn
 		self.status_text.SetText("Your turn" if self.is_my_turn else "Opponent's turn")
 
-	def __GetPieceAt(self, x, y):
-		# In a real implementation, we'd store the board state
-		return 0 
-
 	def __GetPieceIcon(self, piece):
-		# Placeholder icons
+		path = self.path + "pieces/"
 		icons = {
-			CHESS_PIECE_W_PAWN: 10,
-			CHESS_PIECE_W_KNIGHT: 11,
-			CHESS_PIECE_W_BISHOP: 12,
-			CHESS_PIECE_W_ROOK: 13,
-			CHESS_PIECE_W_QUEEN: 14,
-			CHESS_PIECE_W_KING: 15,
-			CHESS_PIECE_B_PAWN: 20,
-			CHESS_PIECE_B_KNIGHT: 21,
-			CHESS_PIECE_B_BISHOP: 22,
-			CHESS_PIECE_B_ROOK: 23,
-			CHESS_PIECE_B_QUEEN: 24,
-			CHESS_PIECE_B_KING: 25,
+			CHESS_PIECE_W_PAWN: "w_pawn.png",
+			CHESS_PIECE_W_KNIGHT: "w_knight.png",
+			CHESS_PIECE_W_BISHOP: "w_bishop.png",
+			CHESS_PIECE_W_ROOK: "w_rook.png",
+			CHESS_PIECE_W_QUEEN: "w_queen.png",
+			CHESS_PIECE_W_KING: "w_king.png",
+			CHESS_PIECE_B_PAWN: "b_pawn.png",
+			CHESS_PIECE_B_KNIGHT: "b_knight.png",
+			CHESS_PIECE_B_BISHOP: "b_bishop.png",
+			CHESS_PIECE_B_ROOK: "b_rook.png",
+			CHESS_PIECE_B_QUEEN: "b_queen.png",
+			CHESS_PIECE_B_KING: "b_king.png",
 		}
-		return icons.get(piece, 0)
+		return path + icons.get(piece, "")
