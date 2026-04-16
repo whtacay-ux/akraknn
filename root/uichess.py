@@ -76,19 +76,26 @@ class ChessWindow(ui.ScriptWindow):
 		self.path = "d:/ymir work/ui/chess/"
 
 		# Create board background
-		self.board_bg = ui.ImageBox()
+		self.board_bg = ui.ExpandedImageBox()
 		self.board_bg.SetParent(self.board_grid)
 		full_path_board = self.path + "board.png"
 		if app.IsExistFile(full_path_board):
 			self.board_bg.LoadImage(full_path_board)
+			# Scale to 256x256 regardless of source size
+			(w, h) = (self.board_bg.GetWidth(), self.board_bg.GetHeight())
+			if w > 0 and h > 0:
+				self.board_bg.SetScale(256.0/float(w), 256.0/float(h))
 		self.board_bg.Show()
 
 		# Selection highlight
-		self.selection_highlight = ui.ImageBox()
+		self.selection_highlight = ui.ExpandedImageBox()
 		self.selection_highlight.SetParent(self.board_grid)
 		full_path_select = self.path + "selection.png"
 		if app.IsExistFile(full_path_select):
 			self.selection_highlight.LoadImage(full_path_select)
+			(w, h) = (self.selection_highlight.GetWidth(), self.selection_highlight.GetHeight())
+			if w > 0 and h > 0:
+				self.selection_highlight.SetScale(32.0/float(w), 32.0/float(h))
 		self.selection_highlight.Hide()
 
 		# Create piece images
@@ -107,7 +114,7 @@ class ChessWindow(ui.ScriptWindow):
 				btn.SetEvent(ui.__mem_func__(self.__OnSelectSlot), (x, y))
 				btn.Show()
 				
-				img = ui.ImageBox()
+				img = ui.ExpandedImageBox()
 				img.SetParent(slot)
 				img.SetPosition(0, 0)
 				img.Hide()
@@ -150,13 +157,20 @@ class ChessWindow(ui.ScriptWindow):
 		name = self.name_edit.GetText()
 		if not name:
 			return
-		net.SendChessPacket(CHESS_SUBHEADER_CG_INVITE, name)
+		if hasattr(net, "SendChessPacket"):
+			net.SendChessPacket(CHESS_SUBHEADER_CG_INVITE, name)
+		else:
+			chat.AppendChat(1, "HATA: Client Source derlenmemis! net.SendChessPacket bulunamadi.")
 
 	def __OnStartBot(self):
-		net.SendChessPacket(CHESS_SUBHEADER_CG_START_BOT)
+		if hasattr(net, "SendChessPacket"):
+			net.SendChessPacket(CHESS_SUBHEADER_CG_START_BOT)
+		else:
+			chat.AppendChat(1, "HATA: Client Source derlenmemis!")
 
 	def __OnQuit(self):
-		net.SendChessPacket(CHESS_SUBHEADER_CG_QUIT)
+		if hasattr(net, "SendChessPacket"):
+			net.SendChessPacket(CHESS_SUBHEADER_CG_QUIT)
 		self.ResetGame()
 		self.Close()
 
@@ -174,7 +188,8 @@ class ChessWindow(ui.ScriptWindow):
 				self.selection_highlight.Hide()
 				return
 			
-			net.SendChessPacket(CHESS_SUBHEADER_CG_MOVE, "", (from_x << 8) | from_y, (x << 8) | y)
+			if hasattr(net, "SendChessPacket"):
+				net.SendChessPacket(CHESS_SUBHEADER_CG_MOVE, "", (from_x << 8) | from_y, (x << 8) | y)
 			self.selected_pos = None
 			self.selection_highlight.Hide()
 		else:
@@ -192,26 +207,31 @@ class ChessWindow(ui.ScriptWindow):
 		# Show accept/decline dialog
 		import uiCommon
 		self.questionDialog = uiCommon.QuestionDialog()
-		self.questionDialog.SetText("%s seninle satranç oynamak istiyor. Kabul ediyor musun?" % name)
+		self.questionDialog.SetText("%s seninle satranc oynamak istiyor. Kabul ediyor musun?\n(Siyah taslarla oynayacaksin)" % name)
 		self.questionDialog.SetAcceptEvent(ui.__mem_func__(self.__AcceptInvite))
 		self.questionDialog.SetCancelEvent(ui.__mem_func__(self.__DeclineInvite))
 		self.questionDialog.Open()
 
 	def __AcceptInvite(self):
-		net.SendChessPacket(CHESS_SUBHEADER_CG_ACCEPT, self.opponent_name)
+		if hasattr(net, "SendChessPacket"):
+			net.SendChessPacket(CHESS_SUBHEADER_CG_ACCEPT, self.opponent_name)
 		self.questionDialog.Close()
 		self.questionDialog = None
 
 	def __DeclineInvite(self):
-		net.SendChessPacket(CHESS_SUBHEADER_CG_DECLINE, self.opponent_name)
+		if hasattr(net, "SendChessPacket"):
+			net.SendChessPacket(CHESS_SUBHEADER_CG_DECLINE, self.opponent_name)
 		self.questionDialog.Close()
 		self.questionDialog = None
 
 	def OnStart(self, is_bot, is_white, opponent_name):
+		self.ResetGame() # Clears visual position before game sync
 		self.is_white = is_white
 		self.is_my_turn = is_white
 		self.opponent_name = opponent_name
-		self.status_text.SetText("Rakip: %s" % opponent_name)
+		
+		color_text = "(Beyaz)" if is_white else "(Siyah)"
+		self.status_text.SetText("Rakip: %s %s" % (opponent_name, color_text))
 		self.Open()
 
 	def OnUpdateBoard(self, x, y, piece):
@@ -221,8 +241,12 @@ class ChessWindow(ui.ScriptWindow):
 		else:
 			icon = self.__GetPieceIcon(piece)
 			if app.IsExistFile(icon):
-				self.pieces[(x, y)]["image"].LoadImage(icon)
-				self.pieces[(x, y)]["image"].Show()
+				img = self.pieces[(x, y)]["image"]
+				img.LoadImage(icon)
+				(w, h) = (img.GetWidth(), img.GetHeight())
+				if w > 0 and h > 0:
+					img.SetScale(32.0/float(w), 32.0/float(h))
+				img.Show()
 			else:
 				self.pieces[(x, y)]["image"].Hide()
 

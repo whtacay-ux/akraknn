@@ -39,7 +39,7 @@ window = {
 
 					"children" :
 					(
-						{ "name":"TitleName", "type":"text", "x":152, "y":3, "text":"Satranç Sistemi", "text_horizontal_align":"center" },
+						{ "name":"TitleName", "type":"text", "x":152, "y":3, "text":"Satranc Sistemi", "text_horizontal_align":"center" },
 					),
 				},
 
@@ -127,7 +127,7 @@ window = {
 							"x" : 152,
 							"y" : 35,
 
-							"text" : "Oyun Hazır",
+							"text" : "Oyun Hazir",
 							"text_horizontal_align" : "center",
 						},
 						{
@@ -137,7 +137,7 @@ window = {
 							"x" : 77,
 							"y" : 60,
 
-							"text" : "Oyundan Ayrıl / Pes Et",
+							"text" : "Oyundan Ayril / Pes Et",
 
 							"default_image" : "d:/ymir work/ui/public/large_button_01.sub",
 							"over_image" : "d:/ymir work/ui/public/large_button_02.sub",
