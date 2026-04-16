@@ -78,13 +78,17 @@ class ChessWindow(ui.ScriptWindow):
 		# Create board background
 		self.board_bg = ui.ImageBox()
 		self.board_bg.SetParent(self.board_grid)
-		self.board_bg.LoadImage(self.path + "board.png")
+		full_path_board = self.path + "board.png"
+		if app.IsExistFile(full_path_board):
+			self.board_bg.LoadImage(full_path_board)
 		self.board_bg.Show()
 
 		# Selection highlight
 		self.selection_highlight = ui.ImageBox()
 		self.selection_highlight.SetParent(self.board_grid)
-		self.selection_highlight.LoadImage(self.path + "selection.png")
+		full_path_select = self.path + "selection.png"
+		if app.IsExistFile(full_path_select):
+			self.selection_highlight.LoadImage(full_path_select)
 		self.selection_highlight.Hide()
 
 		# Create piece images
@@ -200,8 +204,11 @@ class ChessWindow(ui.ScriptWindow):
 			self.pieces[(x, y)]["image"].Hide()
 		else:
 			icon = self.__GetPieceIcon(piece)
-			self.pieces[(x, y)]["image"].LoadImage(icon)
-			self.pieces[(x, y)]["image"].Show()
+			if app.IsExistFile(icon):
+				self.pieces[(x, y)]["image"].LoadImage(icon)
+				self.pieces[(x, y)]["image"].Show()
+			else:
+				self.pieces[(x, y)]["image"].Hide()
 
 	def OnUpdate(self):
 		pass
