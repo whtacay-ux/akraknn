@@ -78,6 +78,7 @@ class ChessWindow(ui.ScriptWindow):
 		# Create board background
 		self.board_bg = ui.ExpandedImageBox()
 		self.board_bg.SetParent(self.board_grid)
+		self.board_bg.AddFlag("not_pick")
 		full_path_board = self.path + "board.png"
 		if app.IsExistFile(full_path_board):
 			self.board_bg.LoadImage(full_path_board)
@@ -89,10 +90,19 @@ class ChessWindow(ui.ScriptWindow):
 
 		# Selection highlight
 		self.selection_highlight = ui.ExpandedImageBox()
-		self.selection_highlight.SetParent(self.board_grid)
-		full_path_select = self.path + "selection.png"
-		if app.IsExistFile(full_path_select):
-			self.selection_highlight.LoadImage(full_path_select)
+		self.selection_highlight.SetParent(self.board_bg) # Board background is now parent
+		self.selection_highlight.AddFlag("not_pick")
+		
+		# Proaktif kontrol: selection.png nerede?
+		path_options = [self.path + "selection.png", self.path + "pieces/selection.png"]
+		found_select = False
+		for p in path_options:
+			if app.IsExistFile(p):
+				self.selection_highlight.LoadImage(p)
+				found_select = True
+				break
+		
+		if found_select:
 			(w, h) = (self.selection_highlight.GetWidth(), self.selection_highlight.GetHeight())
 			if w > 0 and h > 0:
 				self.selection_highlight.SetScale(32.0/float(w), 32.0/float(h))
@@ -102,7 +112,7 @@ class ChessWindow(ui.ScriptWindow):
 		for y in range(8):
 			for x in range(8):
 				slot = ui.Window()
-				slot.SetParent(self.board_grid)
+				slot.SetParent(self.board_bg) # Board background is now parent
 				slot.SetSize(32, 32)
 				slot.SetPosition(x * 32, y * 32)
 				
@@ -129,6 +139,7 @@ class ChessWindow(ui.ScriptWindow):
 		self.selected_pos = None
 		self.selection_highlight.Hide()
 		self.is_my_turn = False
+		self.opponent_name = ""
 		self.status_text.SetText("Beklemede")
 
 	def ShowStartingPosition(self):
@@ -148,6 +159,9 @@ class ChessWindow(ui.ScriptWindow):
 		self.OnUpdateBoard(3, 0, CHESS_PIECE_B_QUEEN); self.OnUpdateBoard(4, 0, CHESS_PIECE_B_KING)
 
 	def Open(self):
+		if not self.opponent_name:
+			self.ShowStartingPosition()
+		self.SetCenterPosition()
 		self.Show()
 
 	def Close(self):
@@ -240,14 +254,24 @@ class ChessWindow(ui.ScriptWindow):
 			self.pieces[(x, y)]["image"].Hide()
 		else:
 			icon = self.__GetPieceIcon(piece)
+			# Akıllı kontrol: Hem .png'li hem .png'siz dene
+			final_path = ""
 			if app.IsExistFile(icon):
+				final_path = icon
+			elif app.IsExistFile(icon.replace(".png", "")):
+				final_path = icon.replace(".png", "")
+			
+			if final_path:
 				img = self.pieces[(x, y)]["image"]
-				img.LoadImage(icon)
+				img.LoadImage(final_path)
 				(w, h) = (img.GetWidth(), img.GetHeight())
 				if w > 0 and h > 0:
 					img.SetScale(32.0/float(w), 32.0/float(h))
 				img.Show()
 			else:
+				# Hala bulunamazsa debug icin chat'e yaz
+				import chat
+				chat.AppendChat(1, "Dosya Bulunamadi: " + str(icon))
 				self.pieces[(x, y)]["image"].Hide()
 
 	def OnUpdate(self):
