@@ -32,17 +32,14 @@ CHESS_SUBHEADER_GC_MOVE = 2
 CHESS_SUBHEADER_GC_END = 3
 CHESS_SUBHEADER_GC_UPDATE = 4
 
-class ChessWindow(ui.BoardWithTitleBar):
+class ChessWindow(ui.ScriptWindow):
 	def __init__(self):
-		ui.BoardWithTitleBar.__init__(self)
-		self.SetTitleName("Chess System")
-		self.AddFlag("movable")
-		self.AddFlag("float")
+		ui.ScriptWindow.__init__(self)
 		self.__LoadWindow()
 		self.ResetGame()
 
 	def __del__(self):
-		ui.BoardWithTitleBar.__del__(self)
+		ui.ScriptWindow.__del__(self)
 
 	def __LoadWindow(self):
 		try:
@@ -59,10 +56,12 @@ class ChessWindow(ui.BoardWithTitleBar):
 			self.quit_button = self.GetChild("quit_button")
 			self.name_edit = self.GetChild("name_edit")
 			self.status_text = self.GetChild("status_text")
+			self.title_bar = self.GetChild("TitleBar")
 		except:
 			import exception
 			exception.Abort("ChessWindow.__LoadWindow.BindObject")
 
+		self.title_bar.SetCloseEvent(ui.__mem_func__(self.Close))
 		self.invite_button.SetEvent(ui.__mem_func__(self.__OnInvite))
 		self.bot_button.SetEvent(ui.__mem_func__(self.__OnStartBot))
 		self.quit_button.SetEvent(ui.__mem_func__(self.__OnQuit))
