@@ -36,7 +36,7 @@ class ChessWindow(ui.ScriptWindow):
 	def __init__(self):
 		ui.ScriptWindow.__init__(self)
 		self.__LoadWindow()
-		self.ShowStartingPosition()
+		self.ResetGame()
 
 	def __del__(self):
 		ui.ScriptWindow.__del__(self)
@@ -57,11 +57,19 @@ class ChessWindow(ui.ScriptWindow):
 			self.name_edit = self.GetChild("name_edit")
 			self.status_text = self.GetChild("status_text")
 			self.title_bar = self.GetChild("TitleBar")
+
+			# Yeni nesneler
+			self.history_panel = self.GetChild("history_panel")
+			self.clock_panel = self.GetChild("clock_panel")
+			self.black_time = self.GetChild("BlackTime")
+			self.white_time = self.GetChild("WhiteTime")
+			self.main_bg = self.GetChild("MainBackground")
+			self.close_button = self.GetChild("CloseButton")
 		except:
 			import exception
 			exception.Abort("ChessWindow.__LoadWindow.BindObject")
 
-		self.title_bar.SetCloseEvent(ui.__mem_func__(self.Close))
+		self.close_button.SetEvent(ui.__mem_func__(self.Close))
 		self.invite_button.SetEvent(ui.__mem_func__(self.__OnInvite))
 		self.bot_button.SetEvent(ui.__mem_func__(self.__OnStartBot))
 		self.quit_button.SetEvent(ui.__mem_func__(self.__OnQuit))
@@ -73,28 +81,54 @@ class ChessWindow(ui.ScriptWindow):
 		self.is_my_turn = False
 		self.opponent_name = ""
 
-		self.path = "d:/ymir work/ui/chess/"
+		# Path options for robustness
+		self.path_list = [
+			"d:/ymir work/ui/chess/",
+			"ymir work/ui/chess/",
+			"ui/chess/",
+		]
+		self.path = self.path_list[0] # Default
+
+		# Create a container that is NOT scaled to hold the board and pieces
+		# Yeni tasarimda tahta 320x320 (8x40)
+		self.board_container = ui.Window()
+		self.board_container.SetParent(self.board_grid)
+		self.board_container.SetPosition(0, 0)
+		self.board_container.SetSize(320, 320)
+		self.board_container.Show()
 
 		# Create board background
 		self.board_bg = ui.ExpandedImageBox()
-		self.board_bg.SetParent(self.board_grid)
+		self.board_bg.SetParent(self.board_container)
 		self.board_bg.AddFlag("not_pick")
-		full_path_board = self.path + "board.png"
+		full_path_board = self.path + "board.tga"
 		if app.IsExistFile(full_path_board):
 			self.board_bg.LoadImage(full_path_board)
-			# Scale to 256x256 regardless of source size
 			(w, h) = (self.board_bg.GetWidth(), self.board_bg.GetHeight())
 			if w > 0 and h > 0:
-				self.board_bg.SetScale(256.0/float(w), 256.0/float(h))
+				self.board_bg.SetScale(320.0/float(w), 320.0/float(h))
 		self.board_bg.Show()
+
+		# Arkaplan panellerini güvenli yükle (Crash koruması)
+		self.__SafeLoadBackground(self.history_panel, "panel_history.tga")
+		self.__SafeLoadBackground(self.clock_panel, "panel_clock.tga")
 
 		# Selection highlight
 		self.selection_highlight = ui.ExpandedImageBox()
-		self.selection_highlight.SetParent(self.board_bg) # Board background is now parent
+		self.selection_highlight.SetParent(self.board_container)
+
+		# Arkaplan resmi olceklendirme (640x480 sığdır)
+		if self.main_bg:
+			(w, h) = (self.main_bg.GetWidth(), self.main_bg.GetHeight())
+			if w > 0 and h > 0:
+				self.main_bg.SetScale(640.0/float(w), 480.0/float(h))
 		self.selection_highlight.AddFlag("not_pick")
 		
-		# Proaktif kontrol: selection.png nerede?
-		path_options = [self.path + "selection.png", self.path + "pieces/selection.png"]
+		# Proaktif kontrol: selection.png/tga nerede?
+		path_options = [
+			self.path + "selection.tga", self.path + "selection.png", 
+			self.path + "pieces/selection.tga", self.path + "pieces/selection.png"
+		]
 		found_select = False
 		for p in path_options:
 			if app.IsExistFile(p):
@@ -105,32 +139,49 @@ class ChessWindow(ui.ScriptWindow):
 		if found_select:
 			(w, h) = (self.selection_highlight.GetWidth(), self.selection_highlight.GetHeight())
 			if w > 0 and h > 0:
-				self.selection_highlight.SetScale(32.0/float(w), 32.0/float(h))
+				# 40x40 kareler icin
+				self.selection_highlight.SetScale(40.0/float(w), 40.0/float(h))
 		self.selection_highlight.Hide()
 
 		# Create piece images
 		for y in range(8):
 			for x in range(8):
 				slot = ui.Window()
-				slot.SetParent(self.board_bg) # Board background is now parent
-				slot.SetSize(32, 32)
-				slot.SetPosition(x * 32, y * 32)
+				slot.SetParent(self.board_container)
+				slot.SetPosition(x * 40, y * 40)
+				slot.SetSize(40, 40)
+				slot.Show()
 				
-				# We use a button-like behavior for clicking
+				# Tıklama butonu
 				btn = ui.Button()
 				btn.SetParent(slot)
-				btn.SetSize(32, 32)
 				btn.SetPosition(0, 0)
+				btn.SetSize(40, 40)
 				btn.SetEvent(ui.__mem_func__(self.__OnSelectSlot), (x, y))
 				btn.Show()
 				
+				# Taş resmi - 40x40 icinde 34x34 boyutuyla tam merkezleme (3, 3)
 				img = ui.ExpandedImageBox()
 				img.SetParent(slot)
-				img.SetPosition(0, 0)
+				img.SetPosition(3, 3) 
 				img.Hide()
 				
 				self.pieces[(x, y)] = {"window": slot, "image": img, "button": btn}
 				self.board_state[(x, y)] = CHESS_PIECE_EMPTY
+
+	def __SafeLoadBackground(self, parent, filename):
+		full_path = self.path + filename
+		if app.IsExistFile(full_path):
+			img = ui.ImageBox()
+			img.SetParent(parent)
+			img.LoadImage(full_path)
+			img.Show()
+			if not hasattr(self, "background_images"):
+				self.background_images = []
+			self.background_images.append(img)
+		else:
+			import chat
+			chat.AppendChat(1, "Eksik Panel Resmi: " + full_path)
 
 	def ResetGame(self):
 		for pos in self.pieces:
@@ -159,8 +210,6 @@ class ChessWindow(ui.ScriptWindow):
 		self.OnUpdateBoard(3, 0, CHESS_PIECE_B_QUEEN); self.OnUpdateBoard(4, 0, CHESS_PIECE_B_KING)
 
 	def Open(self):
-		if not self.opponent_name:
-			self.ShowStartingPosition()
 		self.SetCenterPosition()
 		self.Show()
 
@@ -253,25 +302,35 @@ class ChessWindow(ui.ScriptWindow):
 		if piece == CHESS_PIECE_EMPTY:
 			self.pieces[(x, y)]["image"].Hide()
 		else:
-			icon = self.__GetPieceIcon(piece)
-			# Akıllı kontrol: Hem .png'li hem .png'siz dene
+			base_icon_name = self.__GetPieceIcon(piece)
 			final_path = ""
-			if app.IsExistFile(icon):
-				final_path = icon
-			elif app.IsExistFile(icon.replace(".png", "")):
-				final_path = icon.replace(".png", "")
+			
+			# Try all path options
+			for base_path in self.path_list:
+				# Prioritize .tga, then .png, then no extension
+				extensions = [".tga", ".png", ""]
+				found = False
+				for ext in extensions:
+					test_path = base_path + "pieces/" + base_icon_name + ext
+					if app.IsExistFile(test_path):
+						final_path = test_path
+						found = True
+						break
+				if found:
+					break
 			
 			if final_path:
 				img = self.pieces[(x, y)]["image"]
 				img.LoadImage(final_path)
 				(w, h) = (img.GetWidth(), img.GetHeight())
 				if w > 0 and h > 0:
-					img.SetScale(32.0/float(w), 32.0/float(h))
+					# 28x28 boyutuna getirip 32x32 icinde ortaliyoruz
+					img.SetScale(28.0/float(w), 28.0/float(h))
 				img.Show()
 			else:
 				# Hala bulunamazsa debug icin chat'e yaz
 				import chat
-				chat.AppendChat(1, "Dosya Bulunamadi: " + str(icon))
+				chat.AppendChat(1, "Eksik Resim: " + str(base_icon_name))
 				self.pieces[(x, y)]["image"].Hide()
 
 	def OnUpdate(self):
@@ -286,19 +345,18 @@ class ChessWindow(ui.ScriptWindow):
 		self.status_text.SetText("Sıra Sende" if self.is_my_turn else "Rakip Oynuyor")
 
 	def __GetPieceIcon(self, piece):
-		path = self.path + "pieces/"
 		icons = {
-			CHESS_PIECE_W_PAWN: "w_pawn.png",
-			CHESS_PIECE_W_KNIGHT: "w_knight.png",
-			CHESS_PIECE_W_BISHOP: "w_bishop.png",
-			CHESS_PIECE_W_ROOK: "w_rook.png",
-			CHESS_PIECE_W_QUEEN: "w_queen.png",
-			CHESS_PIECE_W_KING: "w_king.png",
-			CHESS_PIECE_B_PAWN: "b_pawn.png",
-			CHESS_PIECE_B_KNIGHT: "b_knight.png",
-			CHESS_PIECE_B_BISHOP: "b_bishop.png",
-			CHESS_PIECE_B_ROOK: "b_rook.png",
-			CHESS_PIECE_B_QUEEN: "b_queen.png",
-			CHESS_PIECE_B_KING: "b_king.png",
+			CHESS_PIECE_W_PAWN: "w_pawn",
+			CHESS_PIECE_W_KNIGHT: "w_knight",
+			CHESS_PIECE_W_BISHOP: "w_bishop",
+			CHESS_PIECE_W_ROOK: "w_rook",
+			CHESS_PIECE_W_QUEEN: "w_queen",
+			CHESS_PIECE_W_KING: "w_king",
+			CHESS_PIECE_B_PAWN: "b_pawn",
+			CHESS_PIECE_B_KNIGHT: "b_knight",
+			CHESS_PIECE_B_BISHOP: "b_bishop",
+			CHESS_PIECE_B_ROOK: "b_rook",
+			CHESS_PIECE_B_QUEEN: "b_queen",
+			CHESS_PIECE_B_KING: "b_king",
 		}
-		return path + icons.get(piece, "")
+		return icons.get(piece, "")

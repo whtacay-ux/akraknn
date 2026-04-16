@@ -1,5 +1,8 @@
 import uiScriptLocale
 
+MAIN_WIDTH = 640
+MAIN_HEIGHT = 480
+
 window = {
 	"name" : "ChessWindow",
 	"style" : ("movable", "float",),
@@ -7,142 +10,141 @@ window = {
 	"x" : 0,
 	"y" : 0,
 
-	"width" : 320,
-	"height" : 420,
+	"width" : MAIN_WIDTH,
+	"height" : MAIN_HEIGHT,
 
 	"children" :
 	(
 		{
 			"name" : "board",
-			"type" : "board",
+			"type" : "window",
 			"style" : ("attach",),
 
 			"x" : 0,
 			"y" : 0,
 
-			"width" : 320,
-			"height" : 420,
+			"width" : MAIN_WIDTH,
+			"height" : MAIN_HEIGHT,
 
 			"children" :
 			(
-				## Title
+				## Arkaplan Resmi
+				{
+					"name" : "MainBackground",
+					"type" : "expanded_image",
+					"x" : 0, "y" : 0,
+					"image" : "d:/ymir work/ui/chess/arkaplan.tga",
+				},
+				## Title (Şeffaf Başlık Alanı)
 				{
 					"name" : "TitleBar",
-					"type" : "titlebar",
+					"type" : "window",
 					"style" : ("attach",),
 
 					"x" : 8,
 					"y" : 7,
 
-					"width" : 304,
-					"color" : "yellow",
+					"width" : MAIN_WIDTH - 16,
+					"height" : 25,
 
 					"children" :
 					(
-						{ "name":"TitleName", "type":"text", "x":152, "y":3, "text":"Satranc Sistemi", "text_horizontal_align":"center" },
+						{ "name":"TitleName", "type":"text", "x":(640 - 16)/2, "y":3, "text":"Satranc Sistemi", "text_horizontal_align":"center" },
+						{ 
+							"name" : "CloseButton", 
+							"type" : "button", 
+							"x" : 640 - 32, "y" : 0, 
+							"default_image" : "d:/ymir work/ui/public/close_button_01.sub",
+							"over_image" : "d:/ymir work/ui/public/close_button_02.sub",
+							"down_image" : "d:/ymir work/ui/public/close_button_03.sub",
+						},
 					),
 				},
 
-				## Board Grid
+				## Board Grid (Sol Taraf)
 				{
 					"name" : "board_grid",
 					"type" : "window",
 
-					"x" : 32,
-					"y" : 40,
+					"x" : 30,
+					"y" : 50,
 
-					"width" : 256,
-					"height" : 256,
+					"width" : 320,
+					"height" : 320,
 				},
 
-				## Controls
+				## Hamle Gecmisi (Sag Ust)
 				{
-					"name" : "control_window",
+					"name" : "history_panel",
 					"type" : "window",
-
-					"x" : 10,
-					"y" : 305,
-
-					"width" : 304,
-					"height" : 110,
-
+					"x" : 380, "y" : 50,
+					"width" : 200, "height" : 120,
 					"children" :
 					(
-						{
-							"name" : "name_slot",
-							"type" : "slotbar",
+						{ "name":"HistoryTitle", "type":"text", "x":10, "y":10, "text":"Hamle Geçmişi", "color":0xffefd587 },
+					),
+				},
 
-							"x" : 0,
-							"y" : 5,
+				## Sure Paneli (Sag Alt)
+				{
+					"name" : "clock_panel",
+					"type" : "window",
+					"x" : 380, "y" : 180,
+					"width" : 200, "height" : 100,
+					"children" :
+					(
+						{ "name":"BlackIcon", "type":"text", "x":40, "y":15, "text":"SİYAH", "text_horizontal_align":"center" },
+						{ "name":"WhiteIcon", "type":"text", "x":130, "y":15, "text":"BEYAZ", "text_horizontal_align":"center" },
+						{ "name":"BlackTime", "type":"text", "x":40, "y":40, "text":"10:00", "text_horizontal_align":"center" },
+						{ "name":"WhiteTime", "type":"text", "x":130, "y":40, "text":"10:00", "text_horizontal_align":"center" },
+					),
+				},
 
-							"width" : 100,
-							"height" : 18,
+				## Alt Butonlar ve Kontroller
+				{
+					"name" : "status_text",
+					"type" : "text",
+					"x" : 480, "y" : 330,
+					"text" : "Beklemede",
+					"text_horizontal_align" : "center",
+				},
 
-							"children" :
-							(
-								{
-									"name" : "name_edit",
-									"type" : "editline",
+				{
+					"name" : "invite_button",
+					"type" : "button",
+					"x" : 380, "y" : 355,
+					"width" : 60, "height" : 25,
+					"default_image" : "d:/ymir work/ui/chess/btn_invite.tga",
+					"over_image" : "d:/ymir work/ui/chess/btn_invite.tga",
+					"down_image" : "d:/ymir work/ui/chess/btn_invite.tga",
+				},
+				{
+					"name" : "bot_button",
+					"type" : "button",
+					"x" : 450, "y" : 355,
+					"width" : 60, "height" : 25,
+					"default_image" : "d:/ymir work/ui/chess/btn_bot.tga",
+					"over_image" : "d:/ymir work/ui/chess/btn_bot.tga",
+					"down_image" : "d:/ymir work/ui/chess/btn_bot.tga",
+				},
+				{
+					"name" : "quit_button",
+					"type" : "button",
+					"x" : 520, "y" : 355,
+					"width" : 60, "height" : 25,
+					"default_image" : "d:/ymir work/ui/chess/btn_quit.tga",
+					"over_image" : "d:/ymir work/ui/chess/btn_quit.tga",
+					"down_image" : "d:/ymir work/ui/chess/btn_quit.tga",
+				},
 
-									"x" : 3,
-									"y" : 3,
-
-									"width" : 94,
-									"height" : 15,
-
-									"input_limit" : 12,
-								},
-							),
-						},
-						{
-							"name" : "invite_button",
-							"type" : "button",
-
-							"x" : 105,
-							"y" : 4,
-
-							"text" : "Davet Et",
-
-							"default_image" : "d:/ymir work/ui/public/middle_button_01.sub",
-							"over_image" : "d:/ymir work/ui/public/middle_button_02.sub",
-							"down_image" : "d:/ymir work/ui/public/middle_button_03.sub",
-						},
-						{
-							"name" : "bot_button",
-							"type" : "button",
-
-							"x" : 195,
-							"y" : 4,
-
-							"text" : "Botla Oyna",
-
-							"default_image" : "d:/ymir work/ui/public/middle_button_01.sub",
-							"over_image" : "d:/ymir work/ui/public/middle_button_02.sub",
-							"down_image" : "d:/ymir work/ui/public/middle_button_03.sub",
-						},
-						{
-							"name" : "status_text",
-							"type" : "text",
-
-							"x" : 152,
-							"y" : 35,
-
-							"text" : "Oyun Hazir",
-							"text_horizontal_align" : "center",
-						},
-						{
-							"name" : "quit_button",
-							"type" : "button",
-
-							"x" : 77,
-							"y" : 60,
-
-							"text" : "Oyundan Ayril / Pes Et",
-
-							"default_image" : "d:/ymir work/ui/public/large_button_01.sub",
-							"over_image" : "d:/ymir work/ui/public/large_button_02.sub",
-							"down_image" : "d:/ymir work/ui/public/large_button_03.sub",
-						},
+				{
+					"name" : "name_slot",
+					"type" : "slotbar",
+					"x" : 380, "y" : 300,
+					"width" : 150, "height" : 18,
+					"children" :
+					(
+						{ "name" : "name_edit", "type" : "editline", "x" : 3, "y" : 3, "width" : 144, "height" : 15, "input_limit" : 12 },
 					),
 				},
 			),
