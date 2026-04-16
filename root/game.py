@@ -1984,7 +1984,7 @@ class GameWindow(ui.ScriptWindow):
 		self.interface.GetChessWindow().OnStart(int(is_bot), int(is_white), opponent_name)
 
 	def __Chess_OnUpdate(self, x, y, piece):
-		self.interface.GetChessWindow().OnUpdate(int(x), int(y), int(piece))
+		self.interface.GetChessWindow().OnUpdateBoard(int(x), int(y), int(piece))
 
 	def __Chess_OnMove(self, from_x, from_y, to_x, to_y):
 		self.interface.GetChessWindow().OnMove(int(from_x), int(from_y), int(to_x), int(to_y))

@@ -104,13 +104,13 @@ class ChessWindow(ui.ScriptWindow):
 		name = self.name_edit.GetText()
 		if not name:
 			return
-		net.SendChessPacket(CHESS_SUBHEADER_CG_INVITE, name=name)
+		net.SendChatPacket("/chess_invite " + name)
 
 	def __OnStartBot(self):
-		net.SendChessPacket(CHESS_SUBHEADER_CG_START_BOT)
+		net.SendChatPacket("/chess_start_bot")
 
 	def __OnQuit(self):
-		net.SendChessPacket(CHESS_SUBHEADER_CG_QUIT)
+		net.SendChatPacket("/chess_quit")
 		self.ResetGame()
 		self.Close()
 
@@ -121,7 +121,7 @@ class ChessWindow(ui.ScriptWindow):
 			# Move to empty slot
 			x, y = self.__GetSlotPos(slotIndex)
 			from_x, from_y = self.selected_pos
-			net.SendChessPacket(CHESS_SUBHEADER_CG_MOVE, arg1=(from_x << 8) | from_y, arg2=(x << 8) | y)
+			net.SendChatPacket("/chess_move %d %d %d %d" % (from_x, from_y, x, y))
 			self.selected_pos = None
 
 	def __OnSelectItemSlot(self, slotIndex):
@@ -131,7 +131,7 @@ class ChessWindow(ui.ScriptWindow):
 		if self.selected_pos:
 			# Capture or change selection
 			from_x, from_y = self.selected_pos
-			net.SendChessPacket(CHESS_SUBHEADER_CG_MOVE, arg1=(from_x << 8) | from_y, arg2=(x << 8) | y)
+			net.SendChatPacket("/chess_move %d %d %d %d" % (from_x, from_y, x, y))
 			self.selected_pos = None
 		else:
 			self.selected_pos = (x, y)
@@ -153,20 +153,20 @@ class ChessWindow(ui.ScriptWindow):
 		self.opponent_name = name
 		self.status_text.SetText("Invitation from %s" % name)
 		# Show accept/decline dialog
-		import uicommon
-		self.questionDialog = uicommon.QuestionDialog()
+		import uiCommon
+		self.questionDialog = uiCommon.QuestionDialog()
 		self.questionDialog.SetText("%s invites you to Chess. Accept?" % name)
 		self.questionDialog.SetAcceptEvent(ui.__mem_func__(self.__AcceptInvite))
 		self.questionDialog.SetCancelEvent(ui.__mem_func__(self.__DeclineInvite))
 		self.questionDialog.Open()
 
 	def __AcceptInvite(self):
-		net.SendChessPacket(CHESS_SUBHEADER_CG_ACCEPT, name=self.opponent_name)
+		net.SendChatPacket("/chess_accept " + self.opponent_name)
 		self.questionDialog.Close()
 		self.questionDialog = None
 
 	def __DeclineInvite(self):
-		net.SendChessPacket(CHESS_SUBHEADER_CG_DECLINE, name=self.opponent_name)
+		net.SendChatPacket("/chess_decline " + self.opponent_name)
 		self.questionDialog.Close()
 		self.questionDialog = None
 
@@ -177,10 +177,13 @@ class ChessWindow(ui.ScriptWindow):
 		self.status_text.SetText("Game started against %s" % opponent_name)
 		self.Open()
 
-	def OnUpdate(self, x, y, piece):
+	def OnUpdateBoard(self, x, y, piece):
 		# Map piece ID to icon
 		icon = self.__GetPieceIcon(piece)
 		self.pieces[(x, y)].SetItemSlot(0, icon, 1)
+
+	def OnUpdate(self):
+		pass
 
 	def OnMove(self, from_x, from_y, to_x, to_y):
 		# Update board locally
